@@ -2,22 +2,17 @@ import 'dart:io';
 import 'dart:ui';
 
 import 'package:analog_clock/analog_clock.dart';
-import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:another_quickbase/another_quickbase.dart';
 import 'package:another_quickbase/another_quickbase_models.dart';
 import 'package:day/day.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 //import 'package:google_ml_kit/google_ml_kit.dart';
 import 'package:air_brother/air_brother.dart';
-
-import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
-import 'package:intl/intl.dart';
 import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import 'package:universal_platform/universal_platform.dart';
@@ -222,7 +217,6 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
     return Scaffold(
       appBar: HowzieAppBar(
         title: widget.title,
@@ -415,7 +409,6 @@ class _MyHomePageState extends State<MyHomePage>
     print("Recognized Tex: $text");
     for (TextBlock block in recognizedText.blocks) {
       final String text = block.text;
-      final List<String> languages = block.recognizedLanguages;
       print("Block Text: $text");
     }
     textRecognizer.close();
@@ -426,7 +419,6 @@ class _MyHomePageState extends State<MyHomePage>
       return;
     }
 
-    List<String> parts = text.split("\n");
     // Extract license number
     String licenseNumber = getNumber(line: text)!; //parts[2];
     // Extract first name
@@ -542,7 +534,6 @@ class _MyHomePageState extends State<MyHomePage>
     print("Recognized Tex: $text");
     for (TextBlock block in recognizedText.blocks) {
       final String text = block.text;
-      final List<String> languages = block.recognizedLanguages;
       print("Block Text: $text");
     }
     textRecognizer.close();
@@ -553,7 +544,6 @@ class _MyHomePageState extends State<MyHomePage>
       return;
     }
 
-    List<String> parts = text.split("\n");
     // Extract license number
     String licenseNumber = getNumber(line: text)!;
     // Use scan time as check in time.
@@ -754,7 +744,6 @@ class _MyHomePageState extends State<MyHomePage>
       {required BuildContext context,
       bool isCheckOut = false,
       required StateSetter setState}) {
-    ThemeData mainTheme = Theme.of(context);
     return Form(
         key: _formKey,
         child: Column(
