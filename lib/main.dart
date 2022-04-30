@@ -1000,7 +1000,7 @@ mixin HowzieLogo {
         decoration: const BoxDecoration(
           shape: BoxShape.circle,
           image: DecorationImage(
-              image: AssetImage("assets/images/surfer_retro.png"),
+              image: AssetImage("assets/images/surfer_retro_small.png"),
               fit: BoxFit.fill),
         ));
   }
