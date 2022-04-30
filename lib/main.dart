@@ -815,7 +815,7 @@ mixin BrotherScanner {
   ///
   /// Looks for scanners on the local network.
   ///
-  Future<List<Connector>> _fetchWifiScanners({int timeout = 5000}) =>
+  Future<List<Connector>> _fetchWifiScanners({int timeout = 1000}) =>
       AirBrother.getNetworkDevices(timeout);
 
   ///
