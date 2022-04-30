@@ -1,9 +1,13 @@
 import 'dart:io';
+import 'dart:ui';
 
+import 'package:analog_clock/analog_clock.dart';
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:another_quickbase/another_quickbase.dart';
 import 'package:another_quickbase/another_quickbase_models.dart';
 import 'package:day/day.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -14,14 +18,19 @@ import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:infinite_scroll_pagination/infinite_scroll_pagination.dart';
 import 'package:intl/intl.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
 import 'package:universal_platform/universal_platform.dart';
 import 'dart:math' as math;
 
 import 'app_keys.dart';
+import 'event_notifier.dart';
 
 const double kLabelWidth = 90.3;
 const double kLabelHeight = 29;
 const double kDefaultRatePerHour = 60.0;
+LottieComposition? kDefaultComposition;
+
 TextStyle kLabelTextStyle = GoogleFonts.vibur();
 
 void main() {
@@ -31,17 +40,129 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
+  final bool isDark = false;
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Howzie Keanu',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
+      theme: toThemeData(),
       home: const MyHomePage(title: 'Howzie Keanu'),
     );
   }
+
+  ThemeData toThemeData() {
+    var accent1 = const Color(0xFFfec89a);
+    var bg1 = const Color(0xFF4cc9f0);
+    var surface1 = const Color(0xfffec89a); //Colors.white;
+    var mainTextColor = isDark ? Colors.white : Colors.black;
+    var greyStrong = const Color(0xFF131A22);
+    var inverseTextColor = !isDark ? Colors.black : Colors.white;
+    //var focus = const Color(0xFF4ac3be);
+    var grey = const Color(0xff999999);
+    var textTheme = (!isDark ? ThemeData.dark() : ThemeData.light()).textTheme;
+    ColorScheme scheme = ColorScheme(
+        brightness: isDark ? Brightness.dark : Brightness.light,
+        primary: accent1,
+        secondary: accent1,
+        background: bg1,
+        surface: surface1,
+        onBackground: mainTextColor,
+        onSurface: mainTextColor,
+        onError: mainTextColor,
+        onPrimary: greyStrong,
+        onSecondary: inverseTextColor,
+        error: Colors.black);
+
+    var t = ThemeData.from(
+      // Use the .dark() and .light() constructors to handle the text themes
+        textTheme: _buildTextTheme(textTheme),
+        // Use ColorScheme to generate the bulk of the color theme
+        colorScheme: scheme);
+
+    t = t.copyWith(
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        primaryIconTheme: const IconThemeData(
+          color: Colors.white,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+            isDense: true,
+            filled: true,
+            fillColor: surface1,
+            labelStyle: TextStyle(
+              fontStyle: FontStyle.italic,
+              color: Colors.black.withAlpha(200),
+            ),
+            focusedErrorBorder:
+            OutlineInputBorder(borderSide: BorderSide(color: accent1)),
+            focusedBorder:
+            OutlineInputBorder(borderSide: BorderSide(color: accent1)),
+            errorBorder:
+            OutlineInputBorder(borderSide: BorderSide(color: accent1)),
+            enabledBorder:
+            OutlineInputBorder(borderSide: BorderSide(color: greyStrong))),
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textSelectionTheme: TextSelectionThemeData(
+          cursorColor: grey,
+          selectionHandleColor: Colors.transparent,
+          selectionColor: grey,
+        ),
+        snackBarTheme: t.snackBarTheme.copyWith(
+            backgroundColor: accent1,
+            actionTextColor: mainTextColor,
+            contentTextStyle:
+            t.textTheme.caption!.copyWith(color: mainTextColor)),
+        scaffoldBackgroundColor: bg1,
+        highlightColor: shift(accent1, .1),
+        toggleableActiveColor: accent1,
+        outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(side: BorderSide(color: accent1))));
+    // All done, return the ThemeData
+    return t;
+  }
+
+  /// This will add luminance in dark mode, and remove it in light.
+  // Allows the view to just make something "stronger" or "weaker" without worrying what the current theme brightness is
+  //      color = theme.shift(someColor, .1); //-10% lum in dark mode, +10% in light mode
+  Color shift(Color c, double amt) {
+    amt *= (isDark ? -1 : 1);
+    var hslc = HSLColor.fromColor(c); // Convert to HSL
+    double lightness =
+    (hslc.lightness + amt).clamp(0, 1.0) as double; // Add/Remove lightness
+    return hslc.withLightness(lightness).toColor(); // Convert back to Color
+  }
+
+  TextTheme _buildTextTheme(TextTheme base) {
+    return base
+        .copyWith(
+      bodyText2: GoogleFonts.robotoCondensed(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        //letterSpacing: letterSpacingOrNone(0.5),
+      ),
+      bodyText1: GoogleFonts.eczar(
+        fontSize: 40,
+        fontWeight: FontWeight.w400,
+        //letterSpacing: letterSpacingOrNone(1.4),
+      ),
+      button: GoogleFonts.robotoCondensed(
+        fontWeight: FontWeight.w700,
+        //letterSpacing: letterSpacingOrNone(2.8),
+      ),
+      headline5: GoogleFonts.eczar(
+        fontSize: 40,
+        fontWeight: FontWeight.w600,
+        //letterSpacing: letterSpacingOrNone(1.4),
+      ),
+    )
+        .apply(
+      displayColor: Colors.black,
+      bodyColor: Colors.black,
+    );
+  }
+
 }
 
 class MyHomePage extends StatefulWidget {
@@ -62,6 +183,8 @@ class _MyHomePageState extends State<MyHomePage>
   final _formKey = GlobalKey<FormState>();
 
   Customer? _activeCustomer;
+  final ProgressModel _progressModel = ProgressModel(
+      status: KeanuStatus.none, message: "Searching for customer...");
 
   QuickBaseClient client = QuickBaseClient(
       qBRealmHostname: AppKeys.quickbaseRealm,
@@ -70,6 +193,11 @@ class _MyHomePageState extends State<MyHomePage>
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [SystemUiOverlay.bottom]);
+
+    // Load the lottie ahead of time so by the time we need it there is no delay.
+    rootBundle.load('assets/lottie/van_morphing_animation.json').then((lottieData) => LottieComposition.fromByteData(lottieData).then((composition) => kDefaultComposition = composition));
+
     _pagingController.addPageRequestListener((pageKey) {
       _fetchPage(pageKey);
     });
@@ -132,17 +260,33 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildLargeCheckInView(BuildContext context) {
-    return PagedGridView(
-        padding: const EdgeInsets.only(left: 16, right: 16),
-        pagingController: _pagingController,
-        builderDelegate: PagedChildBuilderDelegate<Customer>(
-          itemBuilder: (context, item, index) => _generateCheckedInCard(
-              index: index, customer: item, context: context),
+    return Stack(
+      children: [
+        Positioned(
+          child: PagedGridView(
+              padding: const EdgeInsets.only(left: 16, right: 16),
+              pagingController: _pagingController,
+              builderDelegate: PagedChildBuilderDelegate<Customer>(
+                itemBuilder: (context, item, index) => _generateCheckedInCard(
+                    index: index, customer: item, context: context),
+              ),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                  mainAxisExtent: 300 * kLabelHeight / kLabelWidth,
+                  maxCrossAxisExtent: 300,
+                  childAspectRatio: kLabelWidth / kLabelHeight)),
         ),
-        gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-            mainAxisExtent: 300 * kLabelHeight / kLabelWidth,
-            maxCrossAxisExtent: 300,
-            childAspectRatio: kLabelWidth / kLabelHeight));
+        Positioned(
+          child: ChangeNotifierProvider.value(
+              value: _progressModel,
+              child: Consumer<ProgressModel>(
+                builder:
+                    (BuildContext context, ProgressModel data, Widget? child) {
+                  return ProgressOverlay();
+                },
+              )),
+        )
+      ],
+    );
   }
 
   Widget _generateCheckedInCard(
@@ -191,13 +335,24 @@ class _MyHomePageState extends State<MyHomePage>
       return;
     }
 
-    int deletedCount = await _deleteCustomer(customer: customer, client: client);
+    int deletedCount =
+        await _deleteCustomer(customer: customer, client: client);
 
     if (deletedCount > 0) {
       setState(() {
-        _pagingController.itemList?.removeWhere((element) => element.licenseNumber == customer.licenseNumber);
+        _pagingController.itemList?.removeWhere(
+            (element) => element.licenseNumber == customer.licenseNumber);
       });
     }
+  }
+
+  void _showSnackBar({required String message}) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Text(message),
+      ),
+    ));
   }
 
   ///
@@ -208,44 +363,40 @@ class _MyHomePageState extends State<MyHomePage>
   /// - Create customer on Quickbase with checked-in time.
   Future<void> _checkInCustomer() async {
 
-
     if (!(UniversalPlatform.isIOS || UniversalPlatform.isAndroid)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Check-In only available on Mobile Devices."),
-        ),
-      ));
+      _showSnackBar(message: "Check-In only available on Mobile Devices.");
       return;
     }
+
+    _progressModel.setData(
+        status: KeanuStatus.loading,
+        message: "Looking for network scanners...");
 
     // Find Scanners in the network.
     List<Connector> foundScanners = await _fetchWifiScanners();
     // If no scanner found return and show toast.
     if (foundScanners.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("No scanners found. Try again"),
-        ),
-      ));
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(message: "No scanners found. Try again");
       return;
     }
+
+    _progressModel.setData(
+        status: KeanuStatus.loading, message: "Scanning Driver License...");
 
     // Scan image.
     List<String> scannedPaths = await _scanFiles(foundScanners.single);
 
     if (scannedPaths.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds:1),
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Place Driver's License in Scanner. Try again"),
-        ),
-      ));
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(message: "Place Driver License in Scanner. Try again");
       return;
     }
     final scannedFilePath = scannedPaths.single;
+
+    _progressModel.setData(
+        status: KeanuStatus.loading,
+        message: "Reading customer information...");
 
     // Send it through the text recognizer.
     final inputImage = InputImage.fromFilePath(scannedFilePath);
@@ -269,14 +420,9 @@ class _MyHomePageState extends State<MyHomePage>
     }
     textRecognizer.close();
 
-    if (recognizedText.blocks.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds:1),
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Unable to process Driver's License. Try again"),
-        ),
-      ));
+    if (recognizedText.blocks.length < 3 || getNumber(line: text) == null) {
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(message: "Unable to process Driver License. Try again");
       return;
     }
 
@@ -284,12 +430,11 @@ class _MyHomePageState extends State<MyHomePage>
     // Extract license number
     String licenseNumber = getNumber(line: text)!; //parts[2];
     // Extract first name
-    String firstName = recognizedText.blocks[2].text;//parts[3];
+    String firstName = recognizedText.blocks[2].text; //parts[3];
     // Extract last name
     String lastName = recognizedText.blocks[3].text; //parts[4];
     // Use scan time as check in time.
     String checkInTime = Day().toUtc().toIso8601String();
-
 
     // Add record to Quickbase
     Customer customer = Customer(
@@ -298,7 +443,7 @@ class _MyHomePageState extends State<MyHomePage>
         lastName: lastName,
         licenseNumber: licenseNumber,
         ratePerHour: kDefaultRatePerHour,
-        imageUrl: scannedFilePath,
+        //imageUrl: scannedFilePath,
         isCheckedOut: false);
 
     /*
@@ -311,10 +456,11 @@ class _MyHomePageState extends State<MyHomePage>
 
      */
 
-
+    _progressModel.setData(status: KeanuStatus.none);
 
     // Show Customer checking dialog.
-    Customer? editedCustomer = await _showCustomerCheckInDialog(customerToEdit: customer);
+    Customer? editedCustomer =
+        await _showCustomerCheckInDialog(customerToEdit: customer);
 
     if (editedCustomer == null) {
       return;
@@ -335,7 +481,7 @@ class _MyHomePageState extends State<MyHomePage>
   /// calculate the total cost of the lessons.
   ///
   Future<void> _performCustomerCheckout() async {
-
+    /*
     Customer customerToCheckout2 = Customer(
         checkedInTime: Day().toUtc().toIso8601String(),
         checkedOutTime: Day().toUtc().toIso8601String(), // Day().add(3, "h")!.toUtc().toIso8601String(),
@@ -347,54 +493,51 @@ class _MyHomePageState extends State<MyHomePage>
 
     print("Total Charge: ${customerToCheckout2.totalCharge}");
 
+     */
+
     //print ("FOund number : ${getNumber(line: "Florido SiTishine Slate DRIVER LICENSE CLASSE H655-245-85-002-0 FRANCISCO ERNESTO")}");
 
     if (!(UniversalPlatform.isIOS || UniversalPlatform.isAndroid)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds:1),
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Check-In only available on Mobile Devices."),
-        ),
-      ));
+      _showSnackBar(message: "Check-Out only available on Mobile Devices.");
       return;
     }
 
+    _progressModel.setData(
+        status: KeanuStatus.loading,
+        message: "Looking for network scanners...");
     // Scan license
     // Find Scanners in the network.
     List<Connector> foundScanners = await _fetchWifiScanners();
     // If no scanner found return and show toast.
     if (foundScanners.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds:1),
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("No scanners found. Try again"),
-        ),
-      ));
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(message: "No scanners found. Try again");
       return;
     }
+
+    _progressModel.setData(
+        status: KeanuStatus.loading, message: "Scanning Driver's License...");
 
     // Scan image.
     List<String> scannedPaths = await _scanFiles(foundScanners.single);
 
     if (scannedPaths.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Place Driver's License in Scanner. Try again"),
-        ),
-      ));
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(message: "Place Driver's License in Scanner. Try again");
       return;
     }
     final scannedFilePath = scannedPaths.single;
+
+    _progressModel.setData(
+        status: KeanuStatus.loading,
+        message: "Reading customer information...");
 
     // Send it through the text recognizer.
     final inputImage = InputImage.fromFilePath(scannedFilePath);
 
     final textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
     final RecognizedText recognizedText =
-    await textRecognizer.processImage(inputImage);
+        await textRecognizer.processImage(inputImage);
     String text = recognizedText.text;
     print("Recognized Tex: $text");
     for (TextBlock block in recognizedText.blocks) {
@@ -405,13 +548,8 @@ class _MyHomePageState extends State<MyHomePage>
     textRecognizer.close();
 
     if (recognizedText.blocks.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds:1),
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("Unable to process Driver's License. Try again"),
-        ),
-      ));
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(message: "Unable to process Driver's License. Try again");
       return;
     }
 
@@ -421,22 +559,22 @@ class _MyHomePageState extends State<MyHomePage>
     // Use scan time as check in time.
     String checkOutTime = Day().toUtc().toIso8601String();
 
+    _progressModel.setData(
+        status: KeanuStatus.loading, message: "Finding customer...");
+
     // Find customer in Quickbase for customer
-    Customer? customerToCheckout = await _fetchCheckedInCustomer(licenseNumber: licenseNumber, client: client);
+    Customer? customerToCheckout = await _fetchCheckedInCustomer(
+        licenseNumber: licenseNumber, client: client);
 
     if (customerToCheckout == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        duration: Duration(seconds:1),
-        content: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: Text("No checked-in customer found with this license number. Try again"),
-        ),
-      ));
+      _progressModel.setData(status: KeanuStatus.none);
+      _showSnackBar(
+          message:
+              "No checked-in customer found with this license number. Try again");
       return;
     }
 
     customerToCheckout.checkedOutTime = checkOutTime;
-
 
     /* Test customer.
     Customer customerToCheckout = Customer(
@@ -450,9 +588,11 @@ class _MyHomePageState extends State<MyHomePage>
 
      */
 
+    _progressModel.setData(status: KeanuStatus.none);
 
     // Display confirmation dialog with total cost
-    Customer? editedCustomer = await _showCustomerCheckOutDialog(customerToEdit: customerToCheckout);
+    Customer? editedCustomer =
+        await _showCustomerCheckOutDialog(customerToEdit: customerToCheckout);
     if (editedCustomer == null) {
       return;
     }
@@ -462,7 +602,8 @@ class _MyHomePageState extends State<MyHomePage>
 
     // Update list.
     setState(() {
-      _pagingController.itemList?.removeWhere((element) => element.licenseNumber == customerToCheckout.licenseNumber);
+      _pagingController.itemList?.removeWhere((element) =>
+          element.licenseNumber == customerToCheckout.licenseNumber);
     });
   }
 
@@ -611,8 +752,8 @@ class _MyHomePageState extends State<MyHomePage>
 
   Widget _createCustomerCheckInForm(
       {required BuildContext context,
-        bool isCheckOut = false,
-        required StateSetter setState}) {
+      bool isCheckOut = false,
+      required StateSetter setState}) {
     ThemeData mainTheme = Theme.of(context);
     return Form(
         key: _formKey,
@@ -620,55 +761,74 @@ class _MyHomePageState extends State<MyHomePage>
           mainAxisAlignment: MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (_activeCustomer!.imageUrl != null)...[
-              InteractiveViewer(child: Image.file(File(_activeCustomer!.imageUrl!)))
+            if (_activeCustomer!.imageUrl != null && _activeCustomer!.imageUrl?.isNotEmpty == true) ...[
+              InteractiveViewer(
+                  child: Image.file(File(_activeCustomer!.imageUrl!)))
             ],
             RichText(
               text: TextSpan(
                 text: 'Name: ',
-                style: kLabelTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 20),
+                style: kLabelTextStyle.copyWith(
+                    fontWeight: FontWeight.bold, fontSize: 20),
                 children: <TextSpan>[
-                  TextSpan(text: '${_activeCustomer?.nameLine}', style: kLabelTextStyle.copyWith(fontWeight: FontWeight.normal))
+                  TextSpan(
+                      text: '${_activeCustomer?.nameLine}',
+                      style: kLabelTextStyle.copyWith(
+                          fontWeight: FontWeight.normal))
                 ],
               ),
             ),
             RichText(
               text: TextSpan(
                 text: 'Check-In: ',
-                style: kLabelTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                style: kLabelTextStyle.copyWith(
+                    fontWeight: FontWeight.bold, fontSize: 18),
                 children: <TextSpan>[
-                  TextSpan(text: '${_activeCustomer?.localCheckIn}', style: kLabelTextStyle.copyWith(fontWeight: FontWeight.normal))
+                  TextSpan(
+                      text: '${_activeCustomer?.localCheckIn}',
+                      style: kLabelTextStyle.copyWith(
+                          fontWeight: FontWeight.normal))
                 ],
               ),
             ),
-            if (isCheckOut)...[
+            if (isCheckOut) ...[
               RichText(
                 text: TextSpan(
                   text: 'Check-Out: ',
-                  style: kLabelTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: kLabelTextStyle.copyWith(
+                      fontWeight: FontWeight.bold, fontSize: 18),
                   children: <TextSpan>[
-                    TextSpan(text: '${_activeCustomer?.localCheckOut}', style: kLabelTextStyle.copyWith(fontWeight: FontWeight.normal))
+                    TextSpan(
+                        text: '${_activeCustomer?.localCheckOut}',
+                        style: kLabelTextStyle.copyWith(
+                            fontWeight: FontWeight.normal))
                   ],
                 ),
               ),
               RichText(
                 text: TextSpan(
                   text: 'Total: ',
-                  style: kLabelTextStyle.copyWith(fontWeight: FontWeight.bold, fontSize: 18),
+                  style: kLabelTextStyle.copyWith(
+                      fontWeight: FontWeight.bold, fontSize: 18),
                   children: <TextSpan>[
-                    TextSpan(text: '\$${_activeCustomer?.totalCharge}', style: kLabelTextStyle.copyWith(fontWeight: FontWeight.normal))
+                    TextSpan(
+                        text: '\$${_activeCustomer?.totalCharge}',
+                        style: kLabelTextStyle.copyWith(
+                            fontWeight: FontWeight.normal))
                   ],
                 ),
               ),
-            ] else ... [
+            ] else ...[
               TextFormField(
-                initialValue: "${_activeCustomer?.ratePerHour ?? kDefaultRatePerHour}",
+                initialValue:
+                    "${_activeCustomer?.ratePerHour ?? kDefaultRatePerHour}",
                 textInputAction: TextInputAction.next,
                 keyboardType: TextInputType.number,
                 decoration: const InputDecoration(labelText: "\$/hour:"),
                 // The validator receives the text that the user has entered.
                 validator: (value) {
-                  double rate = parseRate(rateStr: value?.replaceAll("\$", " "));
+                  double rate =
+                      parseRate(rateStr: value?.replaceAll("\$", " "));
                   if (rate < 0) {
                     return 'Please enter a valid rate';
                   }
@@ -711,10 +871,45 @@ class _MyHomePageState extends State<MyHomePage>
 
     try {
       return double.parse(rateStr);
-    }
-    catch (e) {
+    } catch (e) {
       return -1.0;
     }
+  }
+}
+
+class ProgressOverlay extends StatelessWidget {
+  const ProgressOverlay({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    ProgressModel progressModel = context.read();
+
+    if (progressModel.status == KeanuStatus.loading) {
+      return BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Center(
+                child: SizedBox(
+                    width: 200,
+                    child: kDefaultComposition == null ? Lottie.asset(
+                        'assets/lottie/van_morphing_animation.json'): Lottie(composition: kDefaultComposition!))),
+            if (progressModel.message != null) ...[
+              AnimatedSwitcher(key: ValueKey<String>(progressModel.message!),
+                duration: const Duration(microseconds: 600),
+                child: Text(
+                  progressModel.message!,
+                  style: kLabelTextStyle.copyWith(fontSize: 20),
+                ),
+              ),
+            ]
+          ],
+        ),
+      );
+    }
+
+    return Container();
   }
 }
 
@@ -764,7 +959,7 @@ class CustomerCheckedInCardView extends StatelessWidget {
                     Expanded(
                       child: Text(
                         customer.nameLine,
-                        style: kLabelTextStyle.copyWith(fontSize: 14),
+                        style: kLabelTextStyle.copyWith(fontSize: 20),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -784,9 +979,9 @@ class CustomerCheckedInCardView extends StatelessWidget {
                   right: 0,
                   child: GestureDetector(
                     onTap: onDeleteTap,
-                    child: const Padding(
+                    child: Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Icon(Icons.close),
+                      child: Icon(Icons.close, color: Theme.of(context).colorScheme.onSecondary,),
                     ),
                   ))
             ]
@@ -860,7 +1055,6 @@ mixin CustomerQuickbase {
   ///
   Future<Customer> _insertCustomer(
       {required Customer customer, required QuickBaseClient client}) async {
-
     var data = [
       {
         "6": {"value": customer.licenseNumber},
@@ -977,8 +1171,7 @@ mixin CustomerQuickbase {
   }
 
   Future<Customer?> _fetchCheckedInCustomer(
-      {required String licenseNumber,
-        required QuickBaseClient client}) async {
+      {required String licenseNumber, required QuickBaseClient client}) async {
     await client.initialize();
 
     var contactTable = await client.getTable(
@@ -999,8 +1192,8 @@ mixin CustomerQuickbase {
             from: contactTable.id!));
 
     List<Customer> customers = contacts.data?.map((item) {
-      return item.toCustomer();
-    }).toList() ??
+          return item.toCustomer();
+        }).toList() ??
         List<Customer>.empty();
 
     if (customers.isEmpty) {
@@ -1012,14 +1205,16 @@ mixin CustomerQuickbase {
 }
 
 mixin UsLicenseNumber {
-  final _licenseNumberRegEx = RegExp(r'^.*([A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]).*$');
+  final _licenseNumberRegEx = RegExp(
+      r'^.*([A-Z0-9]{4}-[A-Z0-9]{3}-[A-Z0-9]{2}-[A-Z0-9]{3}-[A-Z0-9]).*$');
 
   String? getNumber({required String line}) {
     line = line.replaceAll("\n", " ");
-    print ("Trying to match: $line --- ${_licenseNumberRegEx.stringMatch(line)}");
+    print(
+        "Trying to match: $line --- ${_licenseNumberRegEx.stringMatch(line)}");
 
     if (_licenseNumberRegEx.hasMatch(line)) {
-      print ("HasMatch: ${_licenseNumberRegEx.firstMatch(line)}");
+      print("HasMatch: ${_licenseNumberRegEx.firstMatch(line)}");
       return _licenseNumberRegEx.firstMatch(line)?.group(1);
     }
     return null;
@@ -1114,7 +1309,7 @@ class _ExpandableFabState extends State<ExpandableFab>
               padding: const EdgeInsets.all(8.0),
               child: Icon(
                 Icons.close,
-                color: Theme.of(context).primaryColor,
+                color: Theme.of(context).colorScheme.onSecondary,
               ),
             ),
           ),
@@ -1249,39 +1444,71 @@ class HowzieAppBar extends StatelessWidget
       children: [
         AppBar(
           centerTitle: true,
-          shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(180),
-                  topLeft: Radius.circular(180))),
+          shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(180)),
           title:
               Text(title, style: GoogleFonts.loveYaLikeASister(fontSize: 30)),
         ),
         Positioned(
           bottom: 0,
-          right: 8,
+          right: 0,
           child: Center(
             child: buildAppLogo(width: kToolbarHeight, height: kToolbarHeight),
           ),
         ),
-        /*
+
         Positioned(
-          right: 0,
-          bottom: -10,
-          child: Center(
-            child: Transform.scale(
-                scaleX: -1,
-                child: buildAppLogo(
-                    width: kToolbarHeight, height: kToolbarHeight)),
+          left: 0,
+          child: AnalogClock(
+            height:kToolbarHeight,
+            decoration: BoxDecoration(
+                border: Border.all(width: 1.0, color: Colors.black),
+                color: Colors.transparent,
+                shape: BoxShape.circle),
+            width: kToolbarHeight,
+            isLive: true,
+            hourHandColor: Colors.black,
+            minuteHandColor: Colors.black,
+            showSecondHand: true,
+            numberColor: Colors.black87,
+            showNumbers: true,
+            textScaleFactor: 1.4,
+            showTicks: false,
+            datetime: DateTime.now(),
           ),
         )
 
-         */
+
       ],
     );
   }
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
+enum KeanuStatus { none, loading, done, error }
+
+class ProgressModel extends EasyNotifier {
+  ProgressModel({required KeanuStatus status, String? message}) {
+    _status = status;
+    _message = message;
+  }
+
+  KeanuStatus _status = KeanuStatus.none;
+
+  KeanuStatus get status => _status;
+
+  String? _message;
+
+  String? get message => _message;
+
+  void setData({required KeanuStatus status, String? message}) {
+    notify(() {
+      _message = message;
+      _status = status;
+    });
+  }
 }
 
 class Customer {
@@ -1307,25 +1534,33 @@ class Customer {
       this.total,
       this.licenseNumber,
       this.isCheckedOut,
-        this.ratePerHour,
+      this.ratePerHour,
       this.isSelected = false});
 
-  String get nameLine => "$firstName $lastName";
+  String get nameLine => "$lastName, ${firstName![0]}";
 
-  String get localCheckIn => checkedInTime == null ? "" : Day.fromDateTime(DateTime.parse(checkedInTime!).toLocal()).format("hh:mm A");
+  String get localCheckIn => checkedInTime == null
+      ? ""
+      : Day.fromDateTime(DateTime.parse(checkedInTime!).toLocal())
+          .format("hh:mm A");
 
-  String get localCheckOut => checkedOutTime == null ? "" : Day.fromDateTime(DateTime.parse(checkedOutTime!).toLocal()).format("hh:mm A");
+  String get localCheckOut => checkedOutTime == null
+      ? ""
+      : Day.fromDateTime(DateTime.parse(checkedOutTime!).toLocal())
+          .format("hh:mm A");
 
   double get totalCharge {
-
-    if (checkedOutTime?.isNotEmpty == true && checkedInTime?.isNotEmpty == true && ratePerHour != null) {
-      Duration diff = DateTime.parse(checkedOutTime!).difference(DateTime.parse(checkedInTime!));
+    if (checkedOutTime?.isNotEmpty == true &&
+        checkedInTime?.isNotEmpty == true &&
+        ratePerHour != null) {
+      Duration diff = DateTime.parse(checkedOutTime!)
+          .difference(DateTime.parse(checkedInTime!));
       int minutes = diff.inMinutes;
       // Charge even if no time has passed since check in for demo.
       if (minutes == 0) {
         minutes = 1;
       }
-      return (minutes/60.0).ceil() * ratePerHour!;
+      return (minutes / 60.0).ceil() * ratePerHour!;
     }
     return 0;
   }
@@ -1340,7 +1575,7 @@ class Customer {
       double? total,
       String? licenseNumber,
       bool? isCheckedOut,
-        double? ratePerHour,
+      double? ratePerHour,
       bool? isSelected}) {
     return Customer(
         recordId: recordId ?? this.recordId,
@@ -1375,7 +1610,6 @@ extension QuickbaseConverter on Map<String, dynamic> {
         checkedOutTime: "${this["11"]["value"]}",
         total: this["12"]["value"],
         isCheckedOut: this["13"]["value"],
-        ratePerHour: this["14"]["value"]
-    );
+        ratePerHour: this["14"]["value"]);
   }
 }
