@@ -1,16 +1,21 @@
-# howzie_keanu
+# Howzit Keanu
 
-Mini Hackathon #3
+A Flutter project for the Brother Hackathon 2022.
 
-## Getting Started
+## Mini-Hackathon #3.
 
-This project is a starting point for a Flutter application.
+Keanu (the “breeze”) rents surfboards and teaches surfing on the island
+of Kauai. He always gives free lessons to children. To handle the rentals
+and the lessons efficiently, he would love to have an app that can scan
+the driver’s licenses to check in and check out and calculate the fee
+accordingly.
 
-A few resources to get you started if this is your first Flutter project:
+Can you help Keanu? 
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+# Brother Hackathon
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Feel free to use any of my GitHub repositories in your apps. You should also consider
+attending the free Brother Hackathon happening this year. You get a free Brother QL-1110NWB,
+a PT-P910BT, and possibly an awesome DS-940DW mobile scanner. Visit brotherhackathon.com for
+more information. I will be teaching workshops, and they are free. You can ask me any questions.
+Thank you.
