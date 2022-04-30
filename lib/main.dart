@@ -767,6 +767,9 @@ class _MyHomePageState extends State<MyHomePage>
                 ],
               ),
             ),
+            const SizedBox(
+              height: 8,
+            ),
             RichText(
               text: TextSpan(
                 text: 'Check-In: ',
@@ -780,6 +783,10 @@ class _MyHomePageState extends State<MyHomePage>
                 ],
               ),
             ),
+            const SizedBox(
+              height: 8,
+            ),
+
             if (isCheckOut) ...[
               RichText(
                 text: TextSpan(
@@ -794,6 +801,9 @@ class _MyHomePageState extends State<MyHomePage>
                   ],
                 ),
               ),
+              const SizedBox(
+                height: 8,
+              ),
               RichText(
                 text: TextSpan(
                   text: 'Total: ',
@@ -806,6 +816,9 @@ class _MyHomePageState extends State<MyHomePage>
                             fontWeight: FontWeight.normal))
                   ],
                 ),
+              ),
+              const SizedBox(
+                height: 8,
               ),
             ] else ...[
               TextFormField(
@@ -826,9 +839,6 @@ class _MyHomePageState extends State<MyHomePage>
                 },
               )
             ],
-            const SizedBox(
-              height: 8,
-            ),
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: ElevatedButton(
@@ -999,7 +1009,7 @@ mixin BrotherScanner {
   ///
   /// Looks for scanners on the local network.
   ///
-  Future<List<Connector>> _fetchWifiScanners({int timeout = 1000}) =>
+  Future<List<Connector>> _fetchWifiScanners({int timeout = 2000}) =>
       AirBrother.getNetworkDevices(timeout);
 
   ///

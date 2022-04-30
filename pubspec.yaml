@@ -30,7 +30,7 @@ dependencies:
   flutter:
     sdk: flutter
 
-  air_brother: ^0.1.3
+  air_brother: ^0.1.4
   #air_brother:
   #  path: "../air_brother"
 
